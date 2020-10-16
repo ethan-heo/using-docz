@@ -1,0 +1,443 @@
+---
+name: File Structure
+---
+
+## 리액트 프로젝트에서 5단계의 폴더구조
+
+폴더 구조 뿐만아니라 확장 가능한 리액트 어플리케이션 구현을 위함.
+
+### [번외] 좋다고 느껴질 때까지 파일을 이동하는 경우.
+
+결론적으로 소규모 프로젝트 또는 개인 프로젝트 일 때는 괜찮다. 하지만 여러 구성원이 작업하는 프로젝트에서는
+"명확한" 비전없이 파일을 이동하는 것은 안좋은 방법이다.
+
+## 단일 리액트 파일
+
+하나의 파일 내에서 여러 컴포넌트를 사용하는 방식.
+
+```typescript
+import React from "react"
+
+const list = [
+    {
+        id: "a",
+        firstname: "Robin",
+        lastname: "Wieruch",
+        year: 1988
+    },
+    {
+        id: "b",
+        firstname: "Dave",
+        lastname: "Davidds",
+        year: 1990
+    }
+]
+
+const App = () => <List list={list} />
+
+export default App
+
+type Item = {
+    id: string
+    firstname: string
+    lastname: string
+    year: number
+}
+
+type List = Item[]
+
+type ListProps = {
+    list: List
+}
+const List = ({ list }: ListProps) => (
+    <ul>
+        {list.map(item => (
+            <ListItem key={item.id} item={item} />
+        ))}
+    </ul>
+)
+
+type ItemProps = {
+    item: Item
+}
+
+const ListItem = ({ item }: ItemProps) => (
+    <li>
+        <div>{item.id}</div>
+        <div>{item.firstname}</div>
+        <div>{item.lastname}</div>
+        <div>{item.year}</div>
+    </li>
+)
+```
+
+특정 컴포넌트에 밀접한 컴포넌트를 사용하는 경우는 괜찮지만 다른 컴포넌트에서 컴포넌트가 필요한 경우는 사용하기 어렵다.
+
+## 여러 리액트 파일
+
+여러 파일로 구성하는 경우 외부에서 재사용 가능하게 끔 사용하는 경우에 사용한다.
+
+**List.tsx**
+
+```typescript
+import React from "react"
+
+type ItemType = {
+    id: string
+    firstname: string
+    lastname: string
+    year: number
+}
+
+type ListType = ItemType[]
+
+type ListProps = {
+    list: ListType
+}
+
+const List = ({ list }: ListProps) => (
+    <ul>
+        {list.map(item => (
+            <ListItem key={item.id} item={item} />
+        ))}
+    </ul>
+)
+
+export default List
+
+type ItemProps = {
+    item: ItemType
+}
+
+const ListItem = ({ item }: ItemProps) => (
+    <li>
+        <div>{item.id}</div>
+        <div>{item.firstname}</div>
+        <div>{item.lastname}</div>
+        <div>{item.year}</div>
+    </li>
+)
+```
+
+**App.tsx**
+
+```typescript
+import React from "react"
+
+import List from "./List"
+
+const list = [
+    {
+        id: "a",
+        firstname: "Robin",
+        lastname: "Wieruch",
+        year: 1988
+    },
+    {
+        id: "b",
+        firstname: "Dave",
+        lastname: "Davidds",
+        year: 1990
+    }
+]
+
+const App = () => <List list={list} />
+
+export default App
+```
+
+List 파일 내부에서도 ListItem을 따로 파일로 분리할 수 있지만 List 컴포넌트와 매우 밀접한 관계가 있기 때문에 분리하는 것 보단
+같은 파일에 두고 사용하는게 더 좋다. 그리고 재사용 가능해야 할 컴포넌트는 단일 파일로 분리해야 한다.
+
+## 폴더 만들기
+
+규모가 커질 수록 모든 리액트 컴포넌트는 복잡해진다. 리액트 코드가 증가되서가 아닌 스타일 및 테스트 같은 기술적인 내용들이 추가가
+되기 떄문이다. 이러한 접근 방식은 앞으로 더 많은 기술적인 부분들을 추가할 수 있도록 돕기 위한 방식이다.
+
+```bash
+src/
+    App.tsx
+    App.test.ts
+    styles.css
+    List.tsx
+    List.test.ts
+    styles.css
+```
+
+컴포넌트를 찾기 불편한 구조이다. 이 구조를 아래와 같이 변경한다.
+
+```bash
+src/
+    App/
+      index.tsx
+      index.test.ts
+      styles.css
+    List/
+      index.tsx
+      index.test.ts
+      styles.css
+```
+
+이렇게 변경하면 폴더 구조가 명확해진다. 그리고 다른 기능에 관한 파일을 추가하기 편할 뿐더러 컴포넌트를 쉽게 찾을 수 있다.
+
+그리고 List의 ListItem도 List 폴더 내부에 폴더로 제공하여 똑같은 구조로 사용할 수 있다.
+
+```bash
+src/
+    App/
+      index.tsx
+      index.test.ts
+      styles.css
+    List/
+      index.tsx
+      index.test.ts
+      styles.css
+      ListItem/
+        index.tsx
+        index.test.ts
+        styles.css
+```
+
+하지만 여기서 중요한 점은 ListItem 같은 중첩된 컴포넌트가 또 하위에 중첩되도록 하는 방향은 지양하는게 좋다.
+
+## 컴포넌트와 기능 분리
+
+중대형 리액트 컴포넌트를 구조화 할 때 사용하는 방법이다. 둘 이상에서 사용하는 구성요소와 기능을 분리한다.
+
+아래와 같이 components 폴더 내 컴포넌트를 옮긴다.
+
+```bash
+src/
+    components/
+        App/
+          index.tsx
+          index.test.ts
+          styles.css
+        List/
+          index.tsx
+          index.test.ts
+          styles.css
+          ListItem/
+            index.tsx
+            index.test.ts
+            styles.css
+```
+
+이렇게 한 이유는 다른 카테고리에 같은 이름의 폴더를 생성하기 위함이다.
+
+기능은 아래와 같이 만든다.
+
+```bash
+src/
+    components/
+        App/
+          index.tsx
+          index.test.ts
+          styles.css
+        List/
+          index.tsx
+          index.test.ts
+          styles.css
+          ListItem/
+            index.tsx
+            index.test.ts
+            styles.css
+    hooks/
+        useClickOutside/
+            index.ts
+        useData/
+            index.ts
+```
+
+모든 훅이 hooks 폴더 안에 있어야 하는 것은 아니다. 재사용할 필요가 없다면 컴포넌트 폴더 내부에 hooks.ts 라는 파일을 만들거나
+컴포넌트 내부에 훅을 선언해서 사용해도 된다.
+
+전역적으로 사용해야 하는 경우라면 아래처럼 사용할 수 있다.
+
+```bash
+src/
+    components/
+        App/
+          index.tsx
+          index.test.ts
+          styles.css
+        List/
+          index.tsx
+          index.test.ts
+          styles.css
+          ListItem/
+            index.tsx
+            index.test.ts
+            styles.css
+    hooks/
+        useClickOutside/
+            index.ts
+        useData/
+            index.ts
+    contexts/
+        session/
+            index.ts
+```
+
+유틸리티는 services/ 폴더를 만든다. 이름은 다양하게 사용할 수 있지만 이렇게 분리하는 것은 다른 코드에서
+이런 로직을 사용할 수 있게 하는게 목적이다.
+
+```bash
+src/
+    components/
+        App/
+          index.tsx
+          index.test.ts
+          styles.css
+        List/
+          index.tsx
+          index.test.ts
+          styles.css
+          ListItem/
+            index.tsx
+            index.test.ts
+            styles.css
+    hooks/
+        useClickOutside/
+            index.ts
+        useData/
+            index.ts
+    contexts/
+        session/
+            index.ts
+    services/
+        errorTracker/
+            index.ts
+            index.test.ts
+        form/
+            date/
+                index.ts
+                index.test.ts
+            phone/
+                index.ts
+                index.test.ts
+```
+
+services/form/date 폴더에 아래 처럼 구성하면 컴포넌트에서 사용되는 Date 기능만 구성되어 있는 것을 보장할 수 있다.
+
+```typescript
+export const formatDateTime = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hour12: false
+    }).format(date)
+
+export const formatMonth = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+        month: "long"
+    }).format(date)
+```
+
+## 도메인 형식으로 폴더 분리
+
+이 형식은 대규모 프로젝트일 때 도움이 된다. 기술적으로 분리된 폴더에 많은 하위 폴더가 있을 때 사용된다.
+
+```bash
+src/
+    components/
+        App/
+        List/
+        Input/
+        Button/
+        Checkbox/
+        Profile/
+        Avatar/
+        MessageItem/
+        MessageList/
+        PaymentForm/
+        PaymentWizard/
+        ErrorMsg/
+        ErrorBoundary/
+```
+
+여기서 components는 재사용가능한 컴포넌트만 구성된다. 다른 컴포넌트들은 도메인 중심 폴더로 이동한다.
+
+```bash
+src/
+    domain/
+        User/
+            Profile/
+            Avatar/
+        Message/
+            MessageItem/
+            MessageList/
+        Payment/
+            PaymentForm/
+            paymentWizard/
+        Error/
+            ErrorMessage/
+            ErrorBoundary/
+    components/
+        App/
+        List/
+        Input/
+        Button/
+        Checkbox/
+        Profile/
+        Avatar/
+        MessageItem/
+        MessageList/
+        PaymentForm/
+        PaymentWizard/
+        ErrorMsg/
+        ErrorBoundary/
+```
+
+Domain/PaymentForm 이 버튼 또는 Input 컴포넌트가 필요한 경우 재사용가능한 components 폴더에서 가져온다. 또한
+밀접하겨 연결되어 있는 서비스가 있으면 특정 도메인 내에서 구성합니다.
+
+```bash
+src/
+    domain/
+        User/
+            Profile/
+            Avatar/
+        Message/
+            MessageItem/
+            MessageList/
+        Payment/
+            PaymentForm/
+            paymentWizard/
+            services/
+                phone/
+                    index.ts
+                    index.test.ts
+        Error/
+            ErrorMessage/
+            ErrorBoundary/
+            services/
+                index.ts
+                index.test.ts
+    components/
+        App/
+        List/
+        Input/
+        Button/
+        Checkbox/
+        Profile/
+        Avatar/
+        MessageItem/
+        MessageList/
+        PaymentForm/
+        PaymentWizard/
+        ErrorMsg/
+        ErrorBoundary/
+```
+
+각 도메인 폴더에 services가 포함되는 것은 결정하기 나름이다.
+
+결국 도메인을 하나로 모아 여러 도메인의 파일을 건들지 않고 특정 도메인에서 작업할 수 있도록 하는게 목적이다.
+
+## 참조
+
+-   https://www.robinwieruch.de/react-folder-structure
